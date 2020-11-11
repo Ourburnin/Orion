@@ -2,7 +2,22 @@
 var vplxIp = get_vlpx_ip();
 var tid = Date.parse(new Date()).toString();// 获取到毫秒的时间戳，精确到毫秒
 var tid = tid.substr(0, 10);
+var mgtIp = get_mgt_ip();
 
+function get_mgt_ip(){
+	var obj = new Object();
+	$.ajax({
+		url : "http://127.0.0.1:7773/mgtip",
+		type : "GET",
+		dataType : "json",
+		async:false,
+		success : function(data) {
+			obj =  "http://"+data["ip"];
+		}
+	});
+
+	return obj;
+}
 
 
 function get_vlpx_ip(){
@@ -13,8 +28,6 @@ function get_vlpx_ip(){
 		dataType : "json",
 		async:false,
 		success : function(data) {
-			console.log("okokok");
-			console.log(data["ip"]);
 			obj =  "http://"+data["ip"];
 		}
 	});
@@ -22,6 +35,16 @@ function get_vlpx_ip(){
 	return obj;
 }
 
+function resource_show_data_log() {
+	$.ajax({
+		type : "get",
+		url:vplxIp+ "/resource/show/data",
+		async:false,
+		success : function(resource_data) {
+			write_to_log(tid,'DATA','ROUTE',vplxIp,'/resource/show/data',JSON.stringify(resource_data.data));
+			}
+		});
+}
 
 function write_to_log(tid, t1, t2, d1, d2, data) {
 	$.ajax({
@@ -44,15 +67,16 @@ function write_to_log(tid, t1, t2, d1, d2, data) {
 function resource_oprt() {
 	$
 			.ajax({
-				url : vplxIp + "/host/show/oprt",
+				url : vplxIp + "/resource/show/oprt",
 				type : "get",
 				dataType : "json",
 				data : {
-					tid : tid
+					tid : tid,
+					ip : mgtIp
 				},
 				success : function(status) {
-					write_to_log(tid,'OPRT','ROUTE',vplxIp,'/host/show/oprt111',status);
-
+					write_to_log(tid,'OPRT','ROUTE',vplxIp,'/resource/show/oprt',status);
+					resource_show_data_log();
 					layui
 							.use(
 									[ 'laydate', 'laypage', 'layer', 'table',
@@ -64,11 +88,8 @@ function resource_oprt() {
 										table
 												.render({
 													elem : '#demo',
-													url : vplxIp
-															+ "/resource/show/data" // 数据接口
-													,
+													url : vplxIp+ "/resource/show/data", // 数据接口
 													title : '用户表',
-
 													cols : [ [ // 表头
 															{
 																type : 'checkbox',
@@ -118,7 +139,6 @@ function resource_oprt() {
 												.on(
 														'tool(test)',
 														function(obj) {
-
 															var data = obj.data.mirror_way_son
 															// 做好数据处理，下面直接放进子表中
 
@@ -298,7 +318,7 @@ function resource_oprt() {
 
 				},
 				error:function () {
-					write_to_log(tid,'OPRT','ROUTE',vplxIp,'/host/show/oprt','error');
+					write_to_log(tid,'OPRT','ROUTE',vplxIp,'/resource/show/oprt','error');
 
 				}
 
